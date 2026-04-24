@@ -1,64 +1,28 @@
-name: Build and Deploy
-
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    env:
-      HUGO_VERSION: 0.147.0
-      TZ: Asia/Shanghai
-
-    steps:
-      # 1. 拉取代码
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 0
-
-      # 2. 安装 Go
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.22'
-
-      # 3. 安装 Dart Sass
-      - name: Install Dart Sass
-        run: sudo snap install dart-sass
-
-      # 4. 安装 Hugo
-      - name: Setup Hugo
-        uses: peaceiris/actions-hugo@v3
-        with:
-          hugo-version: ${{ env.HUGO_VERSION }}
-          extended: true
-
-      # 5. 拉取 Hugo 模块
-      - name: Hugo Module Get
-        run: hugo mod get
-
-      # 6. 构建网站
-      - name: Build
-        run: hugo --gc --minify --baseURL "https://blog.canggo.com/"
-
-      # 7. 部署到服务器
-      - name: Deploy to Server
+- name: Debug SSH Key
         run: |
-          # 配置 SSH 密钥
           mkdir -p ~/.ssh
           echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
 
-          # 用 rsync 同步文件到服务器
-          rsync -avz --delete \
-            -e "ssh -i ~/.ssh/deploy_key -p 22 -o StrictHostKeyChecking=no" \
-            public/ \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/blog/
+          echo "=== 1. 文件大小 ==="
+          wc -c ~/.ssh/deploy_key
 
-          # 清理密钥
-          rm -f ~/.ssh/deploy_key
-          echo "✅ 部署完成!"
+          echo "=== 2. 第一行内容 ==="
+          head -1 ~/.ssh/deploy_key
+
+          echo "=== 3. 最后一行内容 ==="
+          tail -1 ~/.ssh/deploy_key
+
+          echo "=== 4. 总行数 ==="
+          wc -l ~/.ssh/deploy_key
+
+          echo "=== 5. 检查有没有 Windows 换行符 ==="
+          file ~/.ssh/deploy_key
+
+          echo "=== 6. 检查有没有隐藏字符 ==="
+          cat -A ~/.ssh/deploy_key | head -3
+
+          echo "=== 7. 尝试加载密钥 ==="
+          ssh-keygen -l -f ~/.ssh/deploy_key 2>&1 || true
+
+          echo "=== 调试完成 ==="
