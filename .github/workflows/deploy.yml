@@ -47,6 +47,6 @@ jobs:
           rsync -avz --delete \
             -e "ssh -i ~/.ssh/deploy_key -p 22 -o StrictHostKeyChecking=no" \
             public/ \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/blog/
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/sites/blog.canggo.com/index/
           rm -f ~/.ssh/deploy_key
           echo "✅ 部署完成!"
