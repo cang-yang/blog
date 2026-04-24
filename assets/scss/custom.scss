@@ -1,3 +1,13 @@
-/*
-    You can add your own custom styles here.
-*/
+/* 
+ * 自定义样式已迁移至 layouts/partials/custom/head-custom.html
+ * 此文件仅保留主题变量覆盖
+ */
+:root {
+    --accent-color: #3b82f6;
+    --accent-color-darker: #2563eb;
+    --card-border-radius: 16px;
+    --body-background: transparent;
+}
+[data-scheme="dark"] {
+    --body-background: transparent;
+}

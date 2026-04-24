@@ -1,0 +1,29 @@
+{{ define "main" }}
+<div class="page-detail">
+    <div class="archives-page glass-card">
+        <h1 class="archives-title">📚 文章归档</h1>
+        <p class="archives-count">共 {{ len (where .Site.RegularPages "Section" "post") }} 篇文章</p>
+        <div class="archives-timeline">
+            {{ range (where .Site.RegularPages "Section" "post").GroupByDate "2006" }}
+            <div class="archives-year-group">
+                <h2 class="archives-year">{{ .Key }}</h2>
+                <div class="archives-items">
+                    {{ range .Pages }}
+                    <a href="{{ .Permalink }}" class="archives-item">
+                        <span class="archives-date">{{ .Date.Format "01-02" }}</span>
+                        <span class="archives-dot"></span>
+                        <div class="archives-info">
+                            <span class="archives-item-title">{{ .Title }}</span>
+                            {{ with .Params.categories }}
+                            <span class="archives-cat">{{ index . 0 }}</span>
+                            {{ end }}
+                        </div>
+                    </a>
+                    {{ end }}
+                </div>
+            </div>
+            {{ end }}
+        </div>
+    </div>
+</div>
+{{ end }}

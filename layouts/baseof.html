@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="{{ .Site.LanguageCode | default "zh-cn" }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{ hugo.Generator }}
+    <title>{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }} - {{ .Site.Title }}{{ end }}</title>
+    <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Params.sidebar.subtitle }}{{ end }}">
+    {{ with .Site.Params.favicon }}<link rel="shortcut icon" href="{{ . | relURL }}">{{ end }}
+    <link rel="canonical" href="{{ .Permalink }}">
+    {{ with resources.Get "scss/style.scss" }}
+        {{ $style := . | toCSS | minify | fingerprint }}
+        <link rel="stylesheet" href="{{ $style.RelPermalink }}">
+    {{ end }}
+    {{ range .AlternativeOutputFormats }}
+        {{ printf `<link rel="%s" type="%s" href="%s" title="%s">` .Rel .MediaType.Type .Permalink $.Site.Title | safeHTML }}
+    {{ end }}
+    {{ partial "custom/head-custom.html" . }}
+    <script>
+    (function(){
+        var k='StackColorScheme',s=localStorage.getItem(k)||'auto',
+            d=window.matchMedia('(prefers-color-scheme:dark)').matches;
+        document.documentElement.dataset.scheme=(s==='dark'||(s==='auto'&&d))?'dark':'light';
+    })();
+    </script>
+</head>
+<body {{ if .IsHome }}class="is-home"{{ end }}>
+    <div class="reading-progress" id="reading-progress"></div>
+    {{ partial "custom/video-bg.html" . }}
+    {{ partial "custom/navbar.html" . }}
+    <div class="page-wrapper" id="page-wrapper">
+        {{ block "main" . }}{{ end }}
+    </div>
+    {{ partial "custom/search-modal.html" . }}
+    <button class="back-to-top" id="back-to-top" aria-label="回到顶部">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+    </button>
+
+    <script>
+    (function(){
+        'use strict';
+        var isHome=document.body.classList.contains('is-home'),
+            nb=document.getElementById('top-navbar'),
+            mb=document.getElementById('mobile-menu-toggle'),
+            nl=document.getElementById('navbar-links'),
+            nsi=document.getElementById('nav-search-input'),
+            noRes=document.getElementById('no-results'),
+            listLabel=document.getElementById('list-label'),
+            listCount=document.getElementById('article-count'),
+            rpb=document.getElementById('reading-progress'),
+            btt=document.getElementById('back-to-top'),
+            sm=document.getElementById('search-modal'),
+            si=document.getElementById('search-input'),
+            sr=document.getElementById('search-results'),
+            sc=document.getElementById('search-close'),
+            idx=null,tmr,tmr2;
+
+        /* 导航栏滚动 */
+        if(nb)window.addEventListener('scroll',function(){
+            nb.classList.toggle('scrolled',window.scrollY>50);
+        },{passive:true});
+
+        /* 暗色模式 */
+        var dt=document.getElementById('dark-mode-toggle');
+        if(dt)dt.addEventListener('click',function(){
+            var h=document.documentElement,n=h.dataset.scheme==='dark'?'light':'dark';
+            h.dataset.scheme=n;localStorage.setItem('StackColorScheme',n);
+        });
+
+        /* 移动端菜单 */
+        if(mb&&nl){
+            mb.addEventListener('click',function(){nl.classList.toggle('show');mb.classList.toggle('active');});
+            nl.querySelectorAll('.nav-link').forEach(function(a){
+                a.addEventListener('click',function(){nl.classList.remove('show');mb.classList.remove('active');});
+            });
+        }
+
+        /* 阅读进度条 */
+        if(rpb&&!isHome){
+            window.addEventListener('scroll',function(){
+                var h=document.documentElement.scrollHeight-window.innerHeight;
+                rpb.style.width=h>0?(window.scrollY/h*100)+'%':'0%';
+            },{passive:true});
+        }
+
+        /* 返回顶部 */
+        if(btt&&!isHome){
+            window.addEventListener('scroll',function(){
+                btt.classList.toggle('show',window.scrollY>300);
+            },{passive:true});
+            btt.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+        }
+
+        /* ========== 首页逻辑 ========== */
+        if(isHome){
+            var fBtns=document.querySelectorAll('.filter-btn'),
+                tags=document.querySelectorAll('.tag-item'),
+                arts=document.querySelectorAll('.article-item'),
+                activeFilter='all',
+                activeTags=[];  /* ★ 改为数组，支持多选 */
+
+            function applyFilters(){
+                var q=nsi?nsi.value.toLowerCase().trim():'';
+                var c=0;
+                arts.forEach(function(a){
+                    var catMatch=true,tagMatch=true,searchMatch=true;
+                    /* 分类 */
+                    if(activeFilter!=='all'){
+                        var ac=(a.dataset.categories||'').split(',').map(function(s){return s.trim();});
+                        catMatch=ac.indexOf(activeFilter)!==-1;
+                    }
+                    /* ★ 标签：文章包含任意一个已选标签即匹配 */
+                    if(activeTags.length>0){
+                        var at=(a.dataset.tags||'').split(',').map(function(s){return s.trim();});
+                        tagMatch=activeTags.some(function(t){return at.indexOf(t)!==-1;});
+                    }
+                    /* 搜索 */
+                    if(q){
+                        var txt=((a.dataset.title||'')+' '+(a.dataset.desc||'')+' '+(a.dataset.categories||'')+' '+(a.dataset.tags||'')).toLowerCase();
+                        searchMatch=txt.indexOf(q)!==-1;
+                    }
+                    var show=catMatch&&tagMatch&&searchMatch;
+                    a.style.display=show?'':'none';
+                    if(show)c++;
+                });
+                /* 更新标题 */
+                var label='📝 全部文章';
+                if(q) label='🔍 '+nsi.value;
+                else if(activeTags.length>0) label='🏷️ '+activeTags.join(' + ');
+                else if(activeFilter!=='all') label='📂 '+activeFilter;
+                if(listLabel)listLabel.textContent=label;
+                if(listCount)listCount.textContent=c+' 篇';
+                if(noRes)noRes.style.display=c===0?'block':'none';
+            }
+
+            /* 分类点击 */
+            fBtns.forEach(function(btn){
+                btn.addEventListener('click',function(){
+                    fBtns.forEach(function(b){b.classList.remove('active');});
+                    this.classList.add('active');
+                    activeFilter=this.dataset.category;
+                    /* 清除所有标签选中 */
+                    activeTags=[];
+                    tags.forEach(function(t){t.classList.remove('active');});
+                    applyFilters();
+                });
+            });
+
+            /* ★ 标签点击：多选切换 */
+            tags.forEach(function(tag){
+                tag.addEventListener('click',function(){
+                    var name=this.dataset.tag;
+                    var idx=activeTags.indexOf(name);
+                    if(idx!==-1){
+                        /* 已选 → 取消 */
+                        activeTags.splice(idx,1);
+                        this.classList.remove('active');
+                    }else{
+                        /* 未选 → 加入 */
+                        activeTags.push(name);
+                        this.classList.add('active');
+                    }
+                    /* 重置分类为全部 */
+                    activeFilter='all';
+                    fBtns.forEach(function(b){b.classList.remove('active');});
+                    var ab=document.querySelector('.filter-btn[data-category="all"]');
+                    if(ab)ab.classList.add('active');
+                    applyFilters();
+                });
+            });
+
+            /* 搜索：直接过滤 */
+            if(nsi){
+                nsi.addEventListener('input',function(){
+                    clearTimeout(tmr);
+                    tmr=setTimeout(applyFilters,200);
+                });
+                nsi.addEventListener('keydown',function(e){if(e.key==='Enter')e.preventDefault();});
+            }
+        }else{
+            /* ========== 非首页：搜索弹窗 ========== */
+            function openS(){
+                if(!sm)return;sm.classList.add('active');document.body.style.overflow='hidden';
+                setTimeout(function(){si&&si.focus();},150);
+                if(!idx)fetch('/search/index.json').then(function(r){return r.json();}).then(function(d){idx=d;}).catch(function(){idx=[];});
+            }
+            function closeS(){
+                if(!sm)return;sm.classList.remove('active');document.body.style.overflow='';
+                if(si)si.value='';if(sr)sr.innerHTML='';
+            }
+            function doS(q){
+                if(!sr||!idx||!q.trim()){if(sr)sr.innerHTML='';return;}
+                var t=q.toLowerCase().split(/\s+/).filter(Boolean);
+                var m=idx.filter(function(i){
+                    var s=((i.title||'')+(i.content||'')+(i.tags||[]).join(' ')).toLowerCase();
+                    return t.every(function(w){return s.indexOf(w)!==-1;});
+                }).slice(0,8);
+                if(!m.length){sr.innerHTML='<div class="search-empty">没有找到相关文章</div>';return;}
+                sr.innerHTML=m.map(function(i){
+                    return '<a href="'+i.permalink+'" class="search-result-item"><div class="sr-title">'+(i.title||'')+'</div><div class="sr-preview">'+((i.content||'').substring(0,100))+'...</div></a>';
+                }).join('');
+            }
+            if(nsi){
+                nsi.addEventListener('focus',function(){openS();if(si)si.value=this.value;});
+                nsi.addEventListener('keydown',function(e){
+                    if(e.key==='Enter'){e.preventDefault();openS();if(si){si.value=this.value;doS(this.value);}}
+                });
+            }
+            var stm=document.getElementById('search-toggle-mobile');
+            if(stm)stm.addEventListener('click',openS);
+            if(sc)sc.addEventListener('click',closeS);
+            if(sm)sm.addEventListener('click',function(e){if(e.target===sm||e.target.classList.contains('search-modal-overlay'))closeS();});
+            document.addEventListener('keydown',function(e){
+                if(e.key==='Escape'&&sm&&sm.classList.contains('active'))closeS();
+            });
+            if(si)si.addEventListener('input',function(){clearTimeout(tmr2);tmr2=setTimeout(function(){doS(si.value);},200);});
+        }
+    })();
+    </script>
+</body>
+</html>

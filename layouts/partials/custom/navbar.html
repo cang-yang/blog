@@ -1,0 +1,50 @@
+<nav class="top-navbar" id="top-navbar">
+    <div class="navbar-inner">
+        <a class="navbar-logo" href="{{ "/" | relURL }}">
+            {{ with .Site.Params.sidebar.avatar }}
+            <img src="{{ . | relURL }}" alt="Logo" class="navbar-avatar-img" loading="lazy">
+            {{ end }}
+            <span class="navbar-title">{{ .Site.Title }}</span>
+        </a>
+        <div class="navbar-links" id="navbar-links">
+            {{ range .Site.Menus.main }}
+                {{/* 过滤掉：搜索、分类 */}}
+                {{ if and (ne .Name "搜索") (ne .Name "Search") (ne .Name "分类") (ne .Name "Categories") }}
+                <a href="{{ .URL | relURL }}"
+                   class="nav-link {{ if or ($.IsMenuCurrent "main" .) ($.HasMenuCurrent "main" .) }}active{{ end }}">
+                    {{ with .Params.icon }}
+                    <span class="nav-icon">
+                        {{ if eq . "home" }}🏠{{ else if eq . "archives" }}📚{{ else if eq . "user" }}👤{{ else }}📄{{ end }}
+                    </span>
+                    {{ end }}
+                    {{ .Name }}
+                </a>
+                {{ end }}
+            {{ end }}
+        </div>
+        <div class="navbar-actions">
+            <div class="nav-search-box">
+                <svg class="nav-search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="nav-search-input" class="nav-search-input" placeholder="搜索" autocomplete="off">
+            </div>
+            {{ range .Site.Menus.social }}
+                {{ if eq .Identifier "github" }}
+                <a href="{{ .URL }}" class="nav-action-btn" target="_blank" rel="noopener" title="GitHub">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"/></svg>
+                </a>
+                {{ end }}
+            {{ end }}
+            <button class="nav-action-btn mobile-only" id="search-toggle-mobile" aria-label="搜索">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+            <button class="nav-action-btn" id="dark-mode-toggle" aria-label="深色模式">
+                <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            </button>
+            <button class="nav-action-btn hamburger-btn" id="mobile-menu-toggle" aria-label="菜单">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                <svg class="close-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+    </div>
+</nav>

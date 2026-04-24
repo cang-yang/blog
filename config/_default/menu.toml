@@ -1,24 +1,15 @@
-# Configure main menu and social menu
-#[[main]]
-#identifier = "home"
-#name = "Home"
-#url = "/"
-#[main.params]
-#icon = "home"
-#newtab = true
-
 [[social]]
     identifier = "github"
     name       = "GitHub"
-    url        = "https://github.com/CaiJimmy/hugo-theme-stack"
+    url        = "https://github.com/cang-yang"
 
     [social.params]
         icon = "brand-github"
 
 [[social]]
-    identifier = "twitter"
-    name       = "Twitter"
-    url        = "https://twitter.com"
+    identifier = "email"
+    name       = "Email"
+    url        = "mailto:z3211510473y@163.com"
 
     [social.params]
-        icon = "brand-twitter"
+        icon = "mail"

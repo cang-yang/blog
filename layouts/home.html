@@ -1,0 +1,38 @@
+{{ define "main" }}
+<div class="layout-container has-sidebar">
+    {{ partial "custom/profile-sidebar.html" . }}
+    <div class="main-content">
+        <div class="article-list-header">
+            <span id="list-label">📝 全部文章</span>
+            <span class="article-list-count" id="article-count">{{ len (where .Site.RegularPages "Section" "post") }} 篇</span>
+        </div>
+        <div class="article-list" id="article-list">
+            {{ range where .Site.RegularPages "Section" "post" }}
+            <article class="article-item glass-card"
+                data-categories="{{ delimit .Params.categories "," }}"
+                data-title="{{ .Title }}"
+                data-desc="{{ .Description | default .Summary | plainify | truncate 200 }}"
+                data-tags="{{ with .Params.tags }}{{ delimit . "," }}{{ end }}">
+                <a href="{{ .Permalink }}" class="article-item-link">
+                    {{ with .Params.categories }}
+                    <div class="article-cat-row">
+                        {{ range . }}<span class="cat-badge cat-badge-{{ . }}">{{ . }}</span>{{ end }}
+                    </div>
+                    {{ end }}
+                    <h2 class="article-item-title">{{ .Title }}</h2>
+                    <p class="article-item-desc">{{ .Description | default .Summary | plainify | truncate 120 }}</p>
+                    <div class="article-item-meta">
+                        <span>📅 {{ .Date.Format "2006-01-02" }}</span>
+                        <span>⏱ {{ .ReadingTime }}分钟</span>
+                        {{ with .Params.tags }}
+                        <span>🏷️ {{ index . 0 }}{{ if gt (len .) 1 }} +{{ sub (len .) 1 }}{{ end }}</span>
+                        {{ end }}
+                    </div>
+                </a>
+            </article>
+            {{ end }}
+        </div>
+        <div class="no-results" id="no-results">😢 没有找到匹配的文章</div>
+    </div>
+</div>
+{{ end }}

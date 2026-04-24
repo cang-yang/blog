@@ -1,5 +1,19 @@
-public
-resources
+# Hugo 生成目录
+public/
+resources/
 .hugo_build.lock
+
+# 系统文件
 .DS_Store
+Thumbs.db
 assets/jsconfig.json
+
+# 备份/工具
+_backup*/
+_bak*/
+*.pyc
+blog_structure_export.txt
+blog_code_collection.txt
+
+# 大文件（视频放 OSS，不传 Git）
+static/media/*.mp4

@@ -1,0 +1,13 @@
+<div class="bg-layer" id="bg-layer">
+    {{ with .Site.Params.background }}
+        {{ if eq .type "video" }}
+        <video class="bg-video" id="bg-video" autoplay muted loop playsinline poster="{{ with .fallback }}{{ . | relURL }}{{ end }}">
+            <source src="{{ .video | relURL }}" type="video/mp4">
+        </video>
+        {{ end }}
+        {{ with .fallback }}
+        <div class="bg-fallback" style="background-image:url('{{ . | relURL }}')"></div>
+        {{ end }}
+    {{ end }}
+    <div class="bg-overlay"></div>
+</div>

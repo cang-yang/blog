@@ -1,16 +1,10 @@
-# Pages placed under these sections will be shown on homepage and archive page.
 mainSections = ["post"]
-# Output page's full content in RSS.
 rssFullContent = true
 favicon        = "img/favicon.png"
-
-# Accepted values: "default", "lastmod"
-# default = see https://gohugo.io/quick-reference/glossary/#default-sort-order
-# lastmod = sort by last modified date, in descending order
-SortBy              = "default"
+SortBy         = "default"
 
 [footer]
-    since      = 2020
+    since      = 2025
     customText = ""
 
 [dateFormat]
@@ -18,25 +12,25 @@ SortBy              = "default"
     lastUpdated = ":date_full"
 
 [sidebar]
-    emoji    = "🍥"
-    subtitle = "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+    emoji    = "🧑‍💻"
+    subtitle = "Java 后端开发者 | 2027届"
     avatar   = "img/avatar.png"
 
 [article]
-    headingAnchor = false
+    headingAnchor = true
     math          = false
     readingTime   = true
 
     [article.license]
-        enabled = true
-        default = "Licensed under CC BY-NC-SA 4.0"
+        enabled = false
+        default = ""
 
 [widgets]
     homepage = [
-        { type = "search" },
-        { type = "archives", params = { limit = 5 } },
         { type = "categories", params = { limit = 10 } },
         { type = "tag-cloud", params = { limit = 10 } },
+        { type = "archives", params = { limit = 5 } },
+        { type = "search" },
     ]
     page = [{ type = "toc" }]
 
@@ -48,10 +42,16 @@ SortBy              = "default"
     toggle  = true
     default = "auto"
 
-## Comments
 [comments]
-    enabled  = true
-    provider = "disqus"
+    enabled  = false
+    provider = ""
 
-    # See all the available configurations at https://github.com/CaiJimmy/hugo-theme-stack/blob/master/config/_default/params.toml
-    # Copy the configurations you need from there and paste it here.
+
+# ===== 博客改造 v2.0 配置 =====
+[background]
+    type = "video"
+    video = "media/backg.mp4"
+    fallback = "media/bg-fallback.jpg"
+
+[navbar]
+    searchEnabled = true
