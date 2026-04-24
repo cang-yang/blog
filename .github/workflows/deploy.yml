@@ -38,21 +38,32 @@ jobs:
       - name: Build
         run: hugo --gc --minify --baseURL "https://blog.canggo.com/"
 
-      - name: Setup SSH and Deploy
+      - name: Deploy via SSH
+        env:
+          DEPLOY_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
-          echo "=== 测试 SSH 连接 ==="
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo 'SSH连接成功!'"
+          echo "=== 密钥诊断 ==="
+          echo "首行: $(head -1 ~/.ssh/deploy_key)"
+          echo "末行: $(tail -1 ~/.ssh/deploy_key)"
+          echo "行数: $(wc -l < ~/.ssh/deploy_key)"
+          echo "字节: $(wc -c < ~/.ssh/deploy_key)"
 
-          echo "=== 开始同步文件 ==="
+          echo "=== SSH 详细调试 ==="
+          ssh -vvv -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=no \
+            -o PasswordAuthentication=no \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "echo 'SSH连接成功!'" 2>&1 | tail -40
+
+          echo "=== 同步文件 ==="
           rsync -avz --delete \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
             public/ \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/blog/
 
-          echo "=== 部署完成 ==="
           rm -f ~/.ssh/deploy_key
+          echo "=== 部署完成 ==="
