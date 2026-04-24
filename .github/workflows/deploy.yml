@@ -11,39 +11,54 @@ jobs:
     env:
       HUGO_VERSION: 0.147.0
       TZ: Asia/Shanghai
+
     steps:
+      # 1. 拉取代码
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
 
+      # 2. 安装 Go
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
 
+      # 3. 安装 Dart Sass
       - name: Install Dart Sass
         run: sudo snap install dart-sass
 
+      # 4. 安装 Hugo
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v3
         with:
           hugo-version: ${{ env.HUGO_VERSION }}
           extended: true
 
+      # 5. 拉取 Hugo 模块
       - name: Hugo Module Get
         run: hugo mod get
 
+      # 6. 构建网站
       - name: Build
         run: hugo --gc --minify --baseURL "https://blog.canggo.com/"
 
+      # 7. 部署到服务器
       - name: Deploy to Server
         run: |
-          sudo apt-get update && sudo apt-get install -y sshpass
-          sshpass -p "${{ secrets.SERVER_PASSWORD }}" \
-            rsync -avz --delete \
-            -e "ssh -p 22 -o StrictHostKeyChecking=no" \
+          # 配置 SSH 密钥
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          # 用 rsync 同步文件到服务器
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key -p 22 -o StrictHostKeyChecking=no" \
             public/ \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/blog/
-          echo "部署完成!"
+
+          # 清理密钥
+          rm -f ~/.ssh/deploy_key
+          echo "✅ 部署完成!"
