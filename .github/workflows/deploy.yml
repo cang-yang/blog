@@ -9,38 +9,29 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      HUGO_VERSION: 0.154.2
-      DART_SASS_VERSION: 1.97.1
+      HUGO_VERSION: 0.147.0
       TZ: Asia/Shanghai
     steps:
-      # 拉代码
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
 
-      # Go（Hugo Module 需要）
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
 
-      # Dart Sass（Stack 主题 SCSS 需要）
       - name: Install Dart Sass
-        run: |
-          curl -sLJO "https://github.com/sass/dart-sass/releases/download/${DART_SASS_VERSION}/dart-sass-${DART_SASS_VERSION}-linux-x64.tar.gz"
-          tar -C "${HOME}/.local" -xf "dart-sass-${DART_SASS_VERSION}-linux-x64.tar.gz"
-          echo "${HOME}/.local/dart-sass" >> "${GITHUB_PATH}"
+        run: sudo snap install dart-sass
 
-      # Hugo
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v3
         with:
           hugo-version: ${{ env.HUGO_VERSION }}
           extended: true
 
-      # Hugo 缓存（加速构建）
       - name: Cache restore
         id: cache-restore
         uses: actions/cache/restore@v4
@@ -49,11 +40,9 @@ jobs:
           key: hugo-${{ github.run_id }}
           restore-keys: hugo-
 
-      # 下载主题模块
       - name: Hugo Module Get
         run: hugo mod get
 
-      # 构建
       - name: Build
         run: |
           hugo \
@@ -62,14 +51,12 @@ jobs:
             --baseURL "https://blog.canggo.com/" \
             --cacheDir "${{ runner.temp }}/hugo_cache"
 
-      # 保存缓存
       - name: Cache save
         uses: actions/cache/save@v4
         with:
           path: ${{ runner.temp }}/hugo_cache
           key: ${{ steps.cache-restore.outputs.cache-primary-key }}
 
-      # SSH 部署到你的服务器
       - name: Deploy to Server
         uses: easingthemes/ssh-deploy@v4
         with:
