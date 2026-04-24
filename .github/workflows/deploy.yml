@@ -32,14 +32,6 @@ jobs:
           hugo-version: ${{ env.HUGO_VERSION }}
           extended: true
 
-      - name: Cache restore
-        id: cache-restore
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ runner.temp }}/hugo_cache
-          key: hugo-${{ github.run_id }}
-          restore-keys: hugo-
-
       - name: Hugo Module Get
         run: hugo mod get
 
@@ -48,21 +40,16 @@ jobs:
           hugo \
             --gc \
             --minify \
-            --baseURL "https://blog.canggo.com/" \
-            --cacheDir "${{ runner.temp }}/hugo_cache"
-
-      - name: Cache save
-        uses: actions/cache/save@v4
-        with:
-          path: ${{ runner.temp }}/hugo_cache
-          key: ${{ steps.cache-restore.outputs.cache-primary-key }}
+            --baseURL "https://blog.canggo.com/"
 
       - name: Deploy to Server
-        uses: easingthemes/ssh-deploy@v4
+        uses: appleboy/scp-action@v0.1.7
         with:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          REMOTE_HOST: ${{ secrets.SERVER_HOST }}
-          REMOTE_USER: ${{ secrets.SERVER_USER }}
-          SOURCE: "public/"
-          TARGET: "/www/blog/"
-          ARGS: "-avz --delete"
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          source: "public/*"
+          target: "/www/blog"
+          strip_components: 1
+          rm: true
