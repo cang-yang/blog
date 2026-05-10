@@ -40,6 +40,31 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
     </div>
+    {{/* 移动端 TOC 组件：必须在 <script> 之前渲染，否则 JS 获取不到元素 */}}
+    {{ if and .TableOfContents (gt (len .TableOfContents) 100) }}
+    <button class="mobile-toc-toggle" id="mobile-toc-toggle" aria-label="目录导航">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+            <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+            <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+        </svg>
+    </button>
+    <div class="mobile-toc-overlay" id="mobile-toc-overlay"></div>
+    <div class="mobile-toc-sheet" id="mobile-toc-sheet">
+        <div class="mobile-toc-handle"></div>
+        <div class="mobile-toc-header">
+            <span class="mobile-toc-heading">📑 文章目录</span>
+            <button class="mobile-toc-close" id="mobile-toc-close" aria-label="关闭目录">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <div class="mobile-toc-content" id="mobile-toc-content">
+            <!-- JS 动态克隆桌面 TOC 内容填充 -->
+        </div>
+    </div>
+    {{ end }}
 
     <script>
     (function(){
@@ -352,30 +377,5 @@
         })();
     })();
     </script>
-    {{/* 移动端 TOC 组件：仅文章详情页且有 TOC 时渲染 */}}
-    {{ if and .TableOfContents (gt (len .TableOfContents) 100) }}
-    <button class="mobile-toc-toggle" id="mobile-toc-toggle" aria-label="目录导航">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
-            <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
-            <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
-        </svg>
-    </button>
-    <div class="mobile-toc-overlay" id="mobile-toc-overlay"></div>
-    <div class="mobile-toc-sheet" id="mobile-toc-sheet">
-        <div class="mobile-toc-handle"></div>
-        <div class="mobile-toc-header">
-            <span class="mobile-toc-heading">📑 文章目录</span>
-            <button class="mobile-toc-close" id="mobile-toc-close" aria-label="关闭目录">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-            </button>
-        </div>
-        <div class="mobile-toc-content" id="mobile-toc-content">
-            <!-- JS 动态克隆桌面 TOC 内容填充 -->
-        </div>
-    </div>
-    {{ end }}
 </body>
 </html>
