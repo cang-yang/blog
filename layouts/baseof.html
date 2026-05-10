@@ -32,9 +32,14 @@
         {{ block "main" . }}{{ end }}
     </div>
     {{ partial "custom/search-modal.html" . }}
-    <button class="back-to-top" id="back-to-top" aria-label="回到顶部">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-    </button>
+    <div class="floating-actions" id="floating-actions">
+        <button class="back-to-top" id="back-to-top" aria-label="回到顶部">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+        </button>
+        <button class="back-to-bottom" id="back-to-bottom" aria-label="到达底部">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+    </div>
 
     <script>
     (function(){
@@ -48,7 +53,7 @@
             listLabel=document.getElementById('list-label'),
             listCount=document.getElementById('article-count'),
             rpb=document.getElementById('reading-progress'),
-            btt=document.getElementById('back-to-top'),
+            btt=document.getElementById('back-to-top'),btb=document.getElementById('back-to-bottom'),
             sm=document.getElementById('search-modal'),
             si=document.getElementById('search-input'),
             sr=document.getElementById('search-results'),
@@ -83,12 +88,16 @@
             },{passive:true});
         }
 
-        /* 返回顶部 */
-        if(btt&&!isHome){
+        /* 浮动按钮组（返回顶部 + 返回底部） */
+        if((btt||btb)&&!isHome){
             window.addEventListener('scroll',function(){
-                btt.classList.toggle('show',window.scrollY>300);
+                var sy=window.scrollY,
+                    mh=document.documentElement.scrollHeight-window.innerHeight;
+                if(btt)btt.classList.toggle('show',sy>300);
+                if(btb)btb.classList.toggle('show',sy>300&&mh-sy>100);
             },{passive:true});
-            btt.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+            if(btt)btt.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+            if(btb)btb.addEventListener('click',function(){window.scrollTo({top:document.documentElement.scrollHeight,behavior:'smooth'});});
         }
 
         /* ========== 首页逻辑 ========== */
@@ -215,7 +224,155 @@
             });
             if(si)si.addEventListener('input',function(){clearTimeout(tmr2);tmr2=setTimeout(function(){doS(si.value);},200);});
         }
+        /* ========== 文章页阅读增强 ========== */
+        (function(){
+            var articleContent=document.querySelector('.article-content');
+            if(!articleContent)return;
+
+            /* -- 模块 A: TOC 增强 -- */
+            var tocSidebar=document.getElementById('toc-sidebar'),
+                tocNav=tocSidebar&&tocSidebar.querySelector('#TableOfContents'),
+                tocLinks,headingMap={},observer;
+            if(tocNav&&tocSidebar){
+                /* A1: 给 TOC 链接添加 class */
+                tocLinks=tocNav.querySelectorAll('a');
+                tocLinks.forEach(function(a,i){
+                    a.classList.add('toc-link');
+                    var level=1,p=a.parentElement;
+                    while(p&&p!==tocNav){
+                        if(p.tagName==='UL')level++;
+                        p=p.parentElement;
+                    }
+                    a.dataset.level=Math.min(level,3);
+                });
+                /* A2: 建立 href → heading 映射 */
+                tocLinks.forEach(function(a){
+                    var href=a.getAttribute('href');
+                    if(href&&href.charAt(0)==='#'){
+                        var h=document.getElementById(href.substring(1));
+                        if(h)headingMap[href]=h;
+                    }
+                });
+                /* A3: IntersectionObserver 滚动高亮 */
+                var headings=Object.values(headingMap);
+                if(headings.length&&window.IntersectionObserver){
+                    var activeHref=null;
+                    observer=new IntersectionObserver(function(entries){
+                        var visible=[];
+                        entries.forEach(function(e){
+                            if(e.isIntersecting)visible.push({el:e.target,ratio:e.intersectionRatio});
+                            else{var i=visible.findIndex(function(v){return v.el===e.target;});if(i!==-1)visible.splice(i,1);}
+                        });
+                        if(visible.length){
+                            visible.sort(function(a,b){return a.el.getBoundingClientRect().top-b.el.getBoundingClientRect().top;});
+                            var topHref='#'+visible[0].el.id;
+                            if(topHref!==activeHref){
+                                activeHref=topHref;
+                                tocLinks.forEach(function(a){a.classList.remove('active');});
+                                var match=tocNav.querySelector('a[href="'+CSS.escape(topHref.substring(1))+'"]');
+                                if(match){
+                                    match.classList.add('active');
+                                    match.scrollIntoView({block:'nearest',behavior:'smooth'});
+                                }
+                                /* 同步移动端 */
+                                var mtContent=document.getElementById('mobile-toc-content');
+                                if(mtContent){
+                                    mtContent.querySelectorAll('a').forEach(function(a){a.classList.remove('active');});
+                                    var mma=mtContent.querySelector('a[href="'+CSS.escape(topHref.substring(1))+'"]');
+                                    if(mma)mma.classList.add('active');
+                                }
+                            }
+                        }
+                    },{rootMargin:'-80px 0px -70% 0px',threshold:[0,0.25,0.5,0.75,1]});
+                    headings.forEach(function(h){observer.observe(h);});
+                }
+                /* A4: TOC 折叠/展开 + localStorage */
+                var collapseBtn=document.getElementById('toc-collapse-btn');
+                if(collapseBtn){
+                    var saved=localStorage.getItem('toc-collapsed');
+                    if(saved==='true')tocSidebar.classList.add('collapsed');
+                    collapseBtn.addEventListener('click',function(){
+                        tocSidebar.classList.toggle('collapsed');
+                        localStorage.setItem('toc-collapsed',tocSidebar.classList.contains('collapsed'));
+                    });
+                }
+            }
+
+            /* -- 模块 C: 移动端 TOC 面板 -- */
+            var mtToggle=document.getElementById('mobile-toc-toggle'),
+                mtSheet=document.getElementById('mobile-toc-sheet'),
+                mtOverlay=document.getElementById('mobile-toc-overlay'),
+                mtClose=document.getElementById('mobile-toc-close'),
+                mtContent=document.getElementById('mobile-toc-content');
+            if(mtToggle&&mtSheet){
+                var cloned=false;
+                function openMobileToc(){
+                    if(!cloned&&tocNav){
+                        var clone=tocNav.cloneNode(true);
+                        clone.querySelectorAll('a').forEach(function(a){a.classList.add('toc-link');});
+                        mtContent.appendChild(clone);
+                        cloned=true;
+                    }
+                    mtSheet.classList.add('active');
+                    mtOverlay.classList.add('active');
+                    document.body.style.overflow='hidden';
+                    /* 滚动到当前 active 链接 */
+                    var cur=mtContent.querySelector('a.active');
+                    if(cur)cur.scrollIntoView({block:'center'});
+                }
+                function closeMobileToc(){
+                    mtSheet.classList.remove('active');
+                    mtOverlay.classList.remove('active');
+                    document.body.style.overflow='';
+                }
+                mtToggle.addEventListener('click',openMobileToc);
+                if(mtClose)mtClose.addEventListener('click',closeMobileToc);
+                if(mtOverlay)mtOverlay.addEventListener('click',closeMobileToc);
+                document.addEventListener('keydown',function(e){
+                    if(e.key==='Escape'&&mtSheet.classList.contains('active'))closeMobileToc();
+                });
+                /* 点击链接 → 跳转 + 关闭 */
+                mtContent.addEventListener('click',function(e){
+                    var a=e.target.closest('a');
+                    if(!a)return;
+                    var href=a.getAttribute('href');
+                    if(href&&href.charAt(0)==='#'){
+                        e.preventDefault();
+                        var target=document.getElementById(href.substring(1));
+                        if(target){
+                            target.scrollIntoView({behavior:'smooth'});
+                            closeMobileToc();
+                        }
+                    }
+                });
+            }
+        })();
     })();
     </script>
+    {{/* 移动端 TOC 组件：仅文章详情页且有 TOC 时渲染 */}}
+    {{ if and .TableOfContents (gt (len .TableOfContents) 100) }}
+    <button class="mobile-toc-toggle" id="mobile-toc-toggle" aria-label="目录导航">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+            <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+            <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+        </svg>
+    </button>
+    <div class="mobile-toc-overlay" id="mobile-toc-overlay"></div>
+    <div class="mobile-toc-sheet" id="mobile-toc-sheet">
+        <div class="mobile-toc-handle"></div>
+        <div class="mobile-toc-header">
+            <span class="mobile-toc-heading">📑 文章目录</span>
+            <button class="mobile-toc-close" id="mobile-toc-close" aria-label="关闭目录">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <div class="mobile-toc-content" id="mobile-toc-content">
+            <!-- JS 动态克隆桌面 TOC 内容填充 -->
+        </div>
+    </div>
+    {{ end }}
 </body>
 </html>

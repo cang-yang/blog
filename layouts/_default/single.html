@@ -42,9 +42,18 @@
         {{ end }}
     </article>
     {{ if $hasToc }}
-    <aside class="toc-card glass-card">
-        <h3>📑 目录</h3>
-        {{ .TableOfContents }}
+    <aside class="toc-card glass-card" id="toc-sidebar">
+        <div class="toc-header">
+            <h3 class="toc-title">📑 目录</h3>
+            <button class="toc-collapse-btn" id="toc-collapse-btn" aria-label="折叠目录" title="折叠/展开目录">
+                <svg class="toc-collapse-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <polyline points="18 15 12 9 6 15"/>
+                </svg>
+            </button>
+        </div>
+        <div class="toc-nav-wrapper" id="toc-nav-wrapper">
+            {{ .TableOfContents }}
+        </div>
     </aside>
     {{ end }}
 </div>
