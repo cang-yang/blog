@@ -249,10 +249,14 @@ body.is-home .reading-progress,body.is-home .floating-actions{display:none}
 .article-content li{margin:.4em 0;font-size:1.02rem}
 /* TOC — 增强版侧边栏（现代化） */
 .toc-card{
-  position:sticky;top:var(--content-top);
-  max-height:calc(100vh - var(--content-top) - 32px);
+  position:fixed;
+  top:calc(var(--nav-h) + 24px);
+  right:max(calc((100vw - 1124px) / 2), 16px);
+  width:220px;
+  max-height:calc(100vh - var(--nav-h) - 60px);
   display:flex;flex-direction:column;overflow:hidden;
   padding:18px;font-size:.88rem;
+  z-index:10;
 }
 .toc-header{
   display:flex;align-items:center;justify-content:space-between;
