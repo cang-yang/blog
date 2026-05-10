@@ -93,8 +93,11 @@
             window.addEventListener('scroll',function(){
                 var sy=window.scrollY,
                     mh=document.documentElement.scrollHeight-window.innerHeight;
-                if(btt)btt.classList.toggle('show',sy>300);
-                if(btb)btb.classList.toggle('show',sy>300&&mh-sy>100);
+                /* 回顶：超过 300px 显示 */
+                var showTop=sy>300;
+                if(btt)btt.classList.toggle('show',showTop);
+                /* 回底：与回顶同步显示，仅距底部<50px 时隐藏（避免页面高度计算误差导致不显示） */
+                if(btb)btb.classList.toggle('show',showTop&&mh-sy>50);
             },{passive:true});
             if(btt)btt.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
             if(btb)btb.addEventListener('click',function(){window.scrollTo({top:document.documentElement.scrollHeight,behavior:'smooth'});});
