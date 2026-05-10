@@ -9,7 +9,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      HUGO_VERSION: 0.147.0
+      HUGO_VERSION: 0.157.0
       TZ: Asia/Shanghai
 
     steps:
